@@ -12,7 +12,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT" /></a>
 </p>
 
-极简的 macOS Finder 右键菜单扩展，让你用预配置的应用程序快速打开文件或文件夹。
+极简的 macOS Finder 右键菜单扩展，让你用预配置的应用程序快速打开文件或文件夹，并快速完成路径复制、新建文件等常用操作。
 
 ## 截图
 
@@ -31,9 +31,12 @@
 ## 功能
 
 - 对文件/文件夹右键，可选择用预配置的应用程序打开
-- 复制选中项的绝对路径或相对路径到剪贴板
+- 打开方式支持折叠到「打开方式」子菜单，或直接显示在 Finder 右键一级菜单中
+- 复制选中项的绝对路径、相对路径或文件名到剪贴板
+- 支持在 Finder 右键菜单中新建常用文件类型，并可设置创建后自动打开
 - 容器 App 内配置可用应用程序列表（含每个应用适用的文件扩展名）
 - 支持「仅文件夹」模式，灵活控制菜单项显示范围
+- 支持一键关闭 Flicker 的 Finder 右键菜单输出，并可隐藏程序坞图标或减少主窗口在窗口管理中的展示
 
 ## 工程结构
 
@@ -66,13 +69,13 @@ xcodebuild -project Flicker.xcodeproj -scheme Flicker -configuration Debug build
 
 ```bash
 ./scripts/build_dmg.sh
-# 产物位于 dist/Flicker.dmg
+# 产物位于 dist/Flicker-<version>.dmg
 ```
 
 ### 首次启用扩展
 
-1. 运行容器 App，点击「添加」选择 `.app`、设置名称与适用扩展名
-2. 点击底部「启用 Finder 扩展…」，在 **系统设置 → 隐私与安全性 → 扩展 → 访达** 中勾选 Flicker
+1. 运行容器 App，点击「添加」选择 `.app`、设置名称、适用扩展名与菜单折叠方式
+2. 点击底部「管理 Finder 扩展…」，在 **系统设置 → 隐私与安全性 → 扩展 → 访达** 中勾选 Flicker
 3. 重启 Finder（`killall Finder`）后右键即可见
 
 ## Fork 后需要修改的配置
@@ -91,7 +94,8 @@ xcodebuild -project Flicker.xcodeproj -scheme Flicker -configuration Debug build
 ## 技术说明
 
 - 相对路径基准为当前 Finder 窗口文件夹（`targetedURL`），无法获取时回退为绝对路径
-- 配置通过 App Group 以 JSON 形式在 App 与扩展间共享
+- 配置通过用户 Application Support 目录中的 JSON 文件在 App 与扩展间共享
+- Finder Sync 扩展由 macOS 托管，退出 Flicker 主 App 不等于卸载扩展；如需临时关闭 Flicker 菜单，可在「操作控制」中关闭「启用 Finder 右键菜单」
 - 最低系统版本 macOS 14.0（Sonoma）
 
 ## 贡献

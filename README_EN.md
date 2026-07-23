@@ -12,7 +12,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT" /></a>
 </p>
 
-A minimalist macOS Finder right-click menu extension — open files and folders with your pre-configured apps instantly.
+A minimalist macOS Finder right-click menu extension — open files and folders with your pre-configured apps instantly, copy paths, and create common files without leaving Finder.
 
 ## Screenshots
 
@@ -31,9 +31,12 @@ A minimalist macOS Finder right-click menu extension — open files and folders 
 ## Features
 
 - Right-click files/folders to open with pre-configured applications
-- Copy absolute or relative paths to clipboard
+- Place configured apps either inside the Open With submenu or directly in the Finder context menu
+- Copy absolute paths, relative paths, or file names to clipboard
+- Create common file types from the Finder context menu, with optional auto-open after creation
 - Configure app list with per-app file extension filters inside the container app
 - "Folders only" mode for fine-grained menu visibility control
+- Toggle Flicker's Finder context menu output, hide the Dock icon, and reduce main-window visibility in window managers
 
 ## Project Structure
 
@@ -66,13 +69,13 @@ xcodebuild -project Flicker.xcodeproj -scheme Flicker -configuration Debug build
 
 ```bash
 ./scripts/build_dmg.sh
-# Output: dist/Flicker.dmg
+# Output: dist/Flicker-<version>.dmg
 ```
 
 ### Enable the Extension
 
-1. Launch Flicker, click **Add** to select a `.app`, set its name and applicable file extensions
-2. Click **Enable Finder Extension…** at the bottom, then check Flicker under **System Settings → Privacy & Security → Extensions → Finder**
+1. Launch Flicker, click **Add** to select a `.app`, then set its name, file extensions, and menu collapse behavior
+2. Click **Manage Finder Extension…** at the bottom, then check Flicker under **System Settings → Privacy & Security → Extensions → Finder**
 3. Restart Finder (`killall Finder`) — right-click in Finder to see the menu
 
 ## Configuration After Forking
@@ -91,7 +94,8 @@ If you fork this project and plan to build your own copy, update these values to
 ## Technical Notes
 
 - Relative paths are based on the current Finder window folder (`targetedURL`); falls back to absolute path when unavailable
-- Configuration is shared between the app and extension via App Group in JSON format
+- Configuration is shared between the app and extension via JSON files in the user's Application Support directory
+- Finder Sync extensions are hosted by macOS; quitting Flicker does not unload the extension. To temporarily hide Flicker's menu output, disable **Enable Finder Context Menu** in Action Control
 - Minimum deployment target: macOS 14.0 (Sonoma)
 
 ## Contributing
