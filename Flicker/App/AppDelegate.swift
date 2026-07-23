@@ -67,4 +67,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             URLOpener.handle(url)
         }
     }
+
+    func application(_ application: NSApplication, open url: URL) -> Bool {
+        Log.debug("application open url: \(url)")
+        URLOpener.handle(url)
+        return true
+    }
 }

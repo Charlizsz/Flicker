@@ -23,8 +23,10 @@ struct GeneralSettingsPanel: View {
             Section("界面") {
                 Toggle("在系统菜单栏显示图标", isOn: $settings.showMenuBarIcon)
                     .help("关闭后将从菜单栏移除 Flicker 图标")
-                Toggle("在Dock栏显示", isOn: $settings.showInDock)
-                    .help("关闭后应用将作为菜单栏/后台应用运行")
+                Toggle("在程序坞显示 Flicker", isOn: $settings.showInDock)
+                    .help("关闭后应用将作为菜单栏/后台应用运行，并从程序坞隐藏")
+                Toggle("隐藏主窗口于窗口管理", isOn: $settings.hideFromWindowManagers)
+                    .help("尽量避免主窗口出现在 Mission Control 和窗口循环中；部分第三方窗口管理软件仍可能显示")
             }
             Section("启动") {
                 Toggle("开机时自动启动", isOn: $settings.launchAtLogin)

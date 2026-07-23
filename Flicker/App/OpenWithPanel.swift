@@ -12,6 +12,7 @@ struct OpenWithPanel: View {
     @EnvironmentObject private var store: AppEntryStore
     @State private var showingAddSheet = false
     @State private var editing: AppEntry?
+    @State private var pendingDelete: AppEntry?
     @Environment(\.openSettings) private var openSettings
 
     var body: some View {
@@ -32,6 +33,28 @@ struct OpenWithPanel: View {
                 showingAddSheet = false
             }
         }
+        .confirmationDialog(
+            "删除打开方式？",
+            isPresented: Binding(
+                get: { pendingDelete != nil },
+                set: { if !$0 { pendingDelete = nil } }
+            ),
+            titleVisibility: .visible
+        ) {
+            if let entry = pendingDelete {
+                Button("删除 \(entry.name)", role: .destructive) {
+                    store.delete(entry)
+                    pendingDelete = nil
+                }
+            }
+            Button("取消", role: .cancel) {
+                pendingDelete = nil
+            }
+        } message: {
+            if let entry = pendingDelete {
+                Text("删除后，\(entry.name) 将不再出现在 Finder 右键菜单中。")
+            }
+        }
     }
 
     private var listSection: some View {
@@ -48,10 +71,12 @@ struct OpenWithPanel: View {
                     ForEach(store.entries) { entry in
                         AppEntryRow(entry: entry) {
                             editing = entry
+                        } onDelete: {
+                            pendingDelete = entry
                         }
                         .contextMenu {
                             Button("编辑") { editing = entry }
-                            Button("删除", role: .destructive) { store.delete(entry) }
+                            Button("删除", role: .destructive) { pendingDelete = entry }
                         }
                     }
                     .onDelete { store.delete(at: $0) }
@@ -66,9 +91,9 @@ struct OpenWithPanel: View {
             Button {
                 FIFinderSyncController.showExtensionManagementInterface()
             } label: {
-                Label("启用 Finder 扩展…", systemImage: "puzzlepiece.extension")
+                Label("管理 Finder 扩展…", systemImage: "puzzlepiece.extension")
             }
-            .help("打开系统设置中的「访达扩展」开关，勾选 Flicker")
+            .help("打开系统设置中的「访达扩展」开关，管理 Flicker 的系统扩展状态")
 
             Spacer()
 
@@ -88,6 +113,7 @@ struct OpenWithPanel: View {
 private struct AppEntryRow: View {
     let entry: AppEntry
     let onEdit: () -> Void
+    let onDelete: () -> Void
 
     var body: some View {
         HStack(spacing: 12) {
@@ -103,7 +129,16 @@ private struct AppEntryRow: View {
                 extText
             }
             Spacer()
-            Button("编辑", action: onEdit).buttonStyle(.borderless)
+            Button(action: onEdit) {
+                Image(systemName: "pencil")
+            }
+            .buttonStyle(.borderless)
+            .help("编辑")
+            Button(role: .destructive, action: onDelete) {
+                Image(systemName: "trash")
+            }
+            .buttonStyle(.borderless)
+            .help("删除")
         }
         .padding(.vertical, 4)
     }
@@ -119,6 +154,10 @@ private struct AppEntryRow: View {
 
     private var extText: some View {
         HStack(spacing: 6) {
+            Text(entry.collapsed ? "打开方式菜单内" : "右键一级菜单")
+                .padding(.horizontal, 6)
+                .padding(.vertical, 1)
+                .background(entry.collapsed ? Color.secondary.opacity(0.12) : Color.accentColor.opacity(0.15), in: Capsule())
             if entry.foldersOnly {
                 Text("仅文件夹")
                     .padding(.horizontal, 6)

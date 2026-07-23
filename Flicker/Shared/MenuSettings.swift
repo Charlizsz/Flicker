@@ -10,6 +10,8 @@ import Foundation
 
 /// 右键菜单显示设置，控制复制类菜单项的显隐。
 struct MenuSettings: Codable {
+    /// 启用 Flicker Finder 右键菜单扩展输出
+    var finderExtensionEnabled: Bool
     /// 显示「复制绝对路径」
     var showCopyAbsolutePath: Bool
     /// 显示「复制相对路径」
@@ -19,6 +21,7 @@ struct MenuSettings: Codable {
 
     /// 默认全开。
     static let defaults = MenuSettings(
+        finderExtensionEnabled: true,
         showCopyAbsolutePath: true,
         showCopyRelativePath: true,
         showCopyFileName: true
@@ -26,21 +29,24 @@ struct MenuSettings: Codable {
 
     // 兼容旧配置：缺少字段时用默认值。
     init(
+        finderExtensionEnabled: Bool = true,
         showCopyAbsolutePath: Bool = true,
         showCopyRelativePath: Bool = true,
         showCopyFileName: Bool = true
     ) {
+        self.finderExtensionEnabled = finderExtensionEnabled
         self.showCopyAbsolutePath = showCopyAbsolutePath
         self.showCopyRelativePath = showCopyRelativePath
         self.showCopyFileName = showCopyFileName
     }
 
     private enum CodingKeys: String, CodingKey {
-        case showCopyAbsolutePath, showCopyRelativePath, showCopyFileName
+        case finderExtensionEnabled, showCopyAbsolutePath, showCopyRelativePath, showCopyFileName
     }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
+        finderExtensionEnabled = try c.decodeIfPresent(Bool.self, forKey: .finderExtensionEnabled) ?? true
         showCopyAbsolutePath = try c.decodeIfPresent(Bool.self, forKey: .showCopyAbsolutePath) ?? true
         showCopyRelativePath = try c.decodeIfPresent(Bool.self, forKey: .showCopyRelativePath) ?? true
         showCopyFileName = try c.decodeIfPresent(Bool.self, forKey: .showCopyFileName) ?? true

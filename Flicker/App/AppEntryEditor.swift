@@ -21,6 +21,7 @@ struct AppEntryEditor: View {
     @State private var appPath: String = ""
     @State private var extText: String = "" // 逗号或空格分隔
     @State private var foldersOnly: Bool = false
+    @State private var collapsed: Bool = true
     @Environment(\.dismiss) private var dismiss
 
     init(mode: Mode, onCommit: @escaping (AppEntry?) -> Void) {
@@ -32,11 +33,13 @@ struct AppEntryEditor: View {
             _appPath = State(initialValue: "")
             _extText = State(initialValue: "")
             _foldersOnly = State(initialValue: false)
+            _collapsed = State(initialValue: true)
         case .edit(let e):
             _name = State(initialValue: e.name)
             _appPath = State(initialValue: e.appPath)
             _extText = State(initialValue: e.allowedExtensions.joined(separator: ", "))
             _foldersOnly = State(initialValue: e.foldersOnly)
+            _collapsed = State(initialValue: e.collapsed)
         }
     }
 
@@ -76,6 +79,9 @@ struct AppEntryEditor: View {
 
             Toggle("仅在文件夹右键时显示", isOn: $foldersOnly)
                 .help("勾选后该应用只在右键文件夹时出现，右键文件时不出现")
+
+            Toggle("折叠到「打开方式」菜单内", isOn: $collapsed)
+                .help("关闭后该应用会直接显示在 Finder 右键菜单的一级菜单中")
 
             HStack {
                 Spacer()
@@ -137,6 +143,13 @@ struct AppEntryEditor: View {
         case .add: id = UUID().uuidString
         case .edit(let e): id = e.id
         }
-        onCommit(AppEntry(id: id, name: name.trimmingCharacters(in: .whitespaces), appPath: appPath, allowedExtensions: exts, foldersOnly: foldersOnly))
+        onCommit(AppEntry(
+            id: id,
+            name: name.trimmingCharacters(in: .whitespaces),
+            appPath: appPath,
+            allowedExtensions: exts,
+            foldersOnly: foldersOnly,
+            collapsed: collapsed
+        ))
     }
 }

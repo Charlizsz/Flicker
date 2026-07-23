@@ -13,6 +13,8 @@ struct ActionControlPanel: View {
     var body: some View {
         Form {
             Section("右键菜单") {
+                Toggle("启用 Finder 右键菜单", isOn: $settings.finderExtensionEnabled)
+                    .help("关闭后 Flicker 不再向 Finder 右键菜单添加任何项目；如需系统层面禁用，请在访达扩展设置中关闭 Flicker")
                 Toggle("复制绝对路径", isOn: $settings.showCopyAbsolutePath)
                     .help("在右键菜单中显示「复制绝对路径」")
                 Toggle("复制相对路径", isOn: $settings.showCopyRelativePath)

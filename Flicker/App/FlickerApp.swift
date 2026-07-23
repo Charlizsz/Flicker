@@ -32,12 +32,33 @@ struct FlickerApp: App {
                 .onOpenURL { url in
                     URLOpener.handle(url)
                 }
+                .background(WindowManagementConfigurator())
         }
         .windowToolbarStyle(.unified)
         .defaultSize(width: 720, height: 520)
 
         Settings {
             SettingsView()
+        }
+    }
+}
+
+private struct WindowManagementConfigurator: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        DispatchQueue.main.async {
+            if let window = view.window {
+                AppSettings.shared.configureWindowManagementVisibility(window)
+            }
+        }
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        DispatchQueue.main.async {
+            if let window = nsView.window {
+                AppSettings.shared.configureWindowManagementVisibility(window)
+            }
         }
     }
 }

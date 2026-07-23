@@ -10,6 +10,9 @@ import FinderSync
 
 @objc(FinderSync)
 final class FinderSync: FIFinderSync {
+    private var openEntryByTag: [Int: String] = [:]
+    private var newFileRequestByTag: [Int: (type: String, directory: String)] = [:]
+    private var nextMenuTag = 1
 
     override init() {
         super.init()
@@ -21,6 +24,9 @@ final class FinderSync: FIFinderSync {
 
     override func menu(for menuKind: FIMenuKind) -> NSMenu {
         let menu = NSMenu(title: "Flicker")
+        resetMenuState()
+        let menuSettings = SharedStore.loadMenuSettings()
+        guard menuSettings.finderExtensionEnabled else { return menu }
         
         // 处理空白区域右键（容器菜单）
         if menuKind == .contextualMenuForContainer {
@@ -41,22 +47,25 @@ final class FinderSync: FIFinderSync {
         let entries = SharedStore.loadEntries()
         let matched = entries.filter { $0.matches(url: target) }
         if !matched.isEmpty {
-            let openItem = NSMenuItem(title: "打开方式", action: nil, keyEquivalent: "")
-            let submenu = NSMenu(title: "Open With")
-            for entry in matched {
-                let item = NSMenuItem(title: entry.name, action: #selector(openWithApp(_:)), keyEquivalent: "")
-                item.target = self
-                item.tag = entry.id.hashValue
-                item.image = NSWorkspace.shared.icon(forFile: entry.appPath)
-                item.image?.size = NSSize(width: 16, height: 16)
-                submenu.addItem(item)
+            let directEntries = matched.filter { !$0.collapsed }
+            let collapsedEntries = matched.filter(\.collapsed)
+
+            for entry in directEntries {
+                menu.addItem(openWithMenuItem(for: entry, direct: true))
             }
-            openItem.submenu = submenu
-            menu.addItem(openItem)
+
+            if !collapsedEntries.isEmpty {
+                let openItem = NSMenuItem(title: "打开方式", action: nil, keyEquivalent: "")
+                let submenu = NSMenu(title: "Open With")
+                for entry in collapsedEntries {
+                    submenu.addItem(openWithMenuItem(for: entry, direct: false))
+                }
+                openItem.submenu = submenu
+                menu.addItem(openItem)
+            }
         }
 
         // 复制类菜单项（受菜单设置控制）
-        let menuSettings = SharedStore.loadMenuSettings()
         if menuSettings.showCopyAbsolutePath {
             menu.addItem(withTitle: "复制绝对路径", action: #selector(copyAbsolutePath(_:)), keyEquivalent: "")
         }
@@ -91,7 +100,8 @@ final class FinderSync: FIFinderSync {
                 keyEquivalent: ""
             )
             item.target = self
-            item.toolTip = "\(fileType.id)|\(directory)"
+            item.tag = nextTag()
+            newFileRequestByTag[item.tag] = (type: fileType.id, directory: directory)
             if let icon = NSImage(systemSymbolName: fileType.icon, accessibilityDescription: nil) {
                 item.image = icon
             }
@@ -112,11 +122,33 @@ final class FinderSync: FIFinderSync {
 
     // MARK: - Actions
 
+    private func resetMenuState() {
+        openEntryByTag.removeAll()
+        newFileRequestByTag.removeAll()
+        nextMenuTag = 1
+    }
+
+    private func nextTag() -> Int {
+        defer { nextMenuTag += 1 }
+        return nextMenuTag
+    }
+
+    private func openWithMenuItem(for entry: AppEntry, direct: Bool) -> NSMenuItem {
+        let title = direct ? "进入\(entry.name)" : entry.name
+        let item = NSMenuItem(title: title, action: #selector(openWithApp(_:)), keyEquivalent: "")
+        item.target = self
+        item.tag = nextTag()
+        openEntryByTag[item.tag] = entry.id
+        item.image = NSWorkspace.shared.icon(forFile: entry.appPath)
+        item.image?.size = NSSize(width: 16, height: 16)
+        return item
+    }
+
     @objc private func openWithApp(_ sender: NSMenuItem) {
         guard let urls = FIFinderSyncController.default().selectedItemURLs(), !urls.isEmpty else { return }
         let entries = SharedStore.loadEntries()
-        // tag 不可靠地反查 id（hashValue 可能冲突），改用 title 匹配名称。
-        guard let entry = entries.first(where: { $0.name == sender.title || $0.id.hashValue == sender.tag }) else { return }
+        guard let entryID = openEntryByTag[sender.tag],
+              let entry = entries.first(where: { $0.id == entryID }) else { return }
 
         // 扩展处于沙盒，直接用 NSWorkspace 打开会被系统拦截。
         // 改为通过自定义 URL scheme 拉起非沙盒的容器 App，由其执行打开动作。
@@ -128,7 +160,7 @@ final class FinderSync: FIFinderSync {
                 URLQueryItem(name: "app", value: entry.appPath)
             ]
             guard let url = comps.url else { continue }
-            NSWorkspace.shared.open(url)
+            openContainerApp(with: url)
         }
     }
 
@@ -156,8 +188,11 @@ final class FinderSync: FIFinderSync {
     @objc private func createNewFile(_ sender: NSMenuItem) {
         Log.debug("createNewFile called")
         Log.debug("title=\(sender.title)")
-        Log.debug("toolTip=\(sender.toolTip ?? "nil")")
         Log.debug("tag=\(sender.tag)")
+        if let request = newFileRequestByTag[sender.tag] {
+            proceedWithNewFile(type: request.type, path: request.directory)
+            return
+        }
         
         guard let identifier = sender.toolTip,
               let separatorIndex = identifier.firstIndex(of: "|") else {
@@ -216,7 +251,7 @@ final class FinderSync: FIFinderSync {
             return
         }
         Log.debug("proceedWithNewFile: opening URL: \(url)")
-        NSWorkspace.shared.open(url)
+        openContainerApp(with: url)
     }
 
     // MARK: - Helpers
@@ -243,5 +278,19 @@ final class FinderSync: FIFinderSync {
         let pb = NSPasteboard.general
         pb.clearContents()
         pb.setString(string, forType: .string)
+    }
+
+    private func openContainerApp(with url: URL) {
+        if let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.wangyanan.flicker") {
+            let config = NSWorkspace.OpenConfiguration()
+            config.activates = false
+            NSWorkspace.shared.open([url], withApplicationAt: appURL, configuration: config) { _, error in
+                if let error {
+                    Log.error("open container app failed: \(error.localizedDescription)")
+                }
+            }
+        } else {
+            NSWorkspace.shared.open(url)
+        }
     }
 }

@@ -19,10 +19,15 @@ final class AppSettings: ObservableObject {
         static let dock = "showInDock"
         static let login = "launchAtLogin"
         static let autoUpdate = "autoCheckUpdates"
+        static let hideFromWindowManagers = "hideFromWindowManagers"
     }
+
+    private static let defaultWindowCollectionBehavior: NSWindow.CollectionBehavior = [.managed, .fullScreenPrimary]
+    private static let hiddenWindowCollectionBehavior: NSWindow.CollectionBehavior = [.transient, .ignoresCycle]
 
     private func persistMenuSettings() {
         SharedStore.saveMenuSettings(MenuSettings(
+            finderExtensionEnabled: finderExtensionEnabled,
             showCopyAbsolutePath: showCopyAbsolutePath,
             showCopyRelativePath: showCopyRelativePath,
             showCopyFileName: showCopyFileName
@@ -52,6 +57,13 @@ final class AppSettings: ObservableObject {
             applyDock()
         }
     }
+    /// 尽量隐藏主窗口，使其不出现在窗口管理入口中。
+    @Published var hideFromWindowManagers: Bool = false {
+        didSet {
+            defaults.set(hideFromWindowManagers, forKey: Key.hideFromWindowManagers)
+            applyWindowManagementVisibility()
+        }
+    }
     /// 开机时自动启动。
     @Published var launchAtLogin: Bool = false {
         didSet {
@@ -67,6 +79,11 @@ final class AppSettings: ObservableObject {
     }
 
     // MARK: - 右键菜单开关（通过 SharedStore 与扩展共享）
+
+    /// 启用 Flicker Finder 右键菜单输出。
+    @Published var finderExtensionEnabled: Bool = true {
+        didSet { persistMenuSettings() }
+    }
 
     /// 显示「复制绝对路径」。
     @Published var showCopyAbsolutePath: Bool = true {
@@ -95,10 +112,12 @@ final class AppSettings: ObservableObject {
     init() {
         showMenuBarIcon = (defaults.object(forKey: Key.menuBar) as? Bool) ?? true
         showInDock = (defaults.object(forKey: Key.dock) as? Bool) ?? true
+        hideFromWindowManagers = (defaults.object(forKey: Key.hideFromWindowManagers) as? Bool) ?? false
         launchAtLogin = (defaults.object(forKey: Key.login) as? Bool) ?? false
         autoCheckUpdates = (defaults.object(forKey: Key.autoUpdate) as? Bool) ?? true
 
         let menuSettings = SharedStore.loadMenuSettings()
+        finderExtensionEnabled = menuSettings.finderExtensionEnabled
         showCopyAbsolutePath = menuSettings.showCopyAbsolutePath
         showCopyRelativePath = menuSettings.showCopyRelativePath
         showCopyFileName = menuSettings.showCopyFileName
@@ -112,6 +131,7 @@ final class AppSettings: ObservableObject {
     func applyAll() {
         applyDock()
         applyMenuBar()
+        applyWindowManagementVisibility()
         applyLoginItem()
     }
 
@@ -121,6 +141,16 @@ final class AppSettings: ObservableObject {
 
     func applyMenuBar() {
         AppMenuBar.shared.setVisible(showMenuBarIcon)
+    }
+
+    func applyWindowManagementVisibility() {
+        NSApp.windows.forEach(configureWindowManagementVisibility(_:))
+    }
+
+    func configureWindowManagementVisibility(_ window: NSWindow) {
+        window.collectionBehavior = hideFromWindowManagers
+            ? Self.hiddenWindowCollectionBehavior
+            : Self.defaultWindowCollectionBehavior
     }
 
     func applyLoginItem() {

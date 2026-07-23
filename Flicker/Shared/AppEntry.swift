@@ -20,22 +20,27 @@ struct AppEntry: Codable, Identifiable, Equatable, Hashable {
     /// 仅在文件夹右键时显示该应用。
     /// 为 false 时按扩展名匹配文件（空数组适用所有文件），且对文件夹始终显示。
     var foldersOnly: Bool
+    /// 是否折叠到「打开方式」子菜单内。
+    /// 为 false 时直接显示在 Finder 右键菜单的一级菜单中。
+    var collapsed: Bool
 
     init(id: String = UUID().uuidString,
          name: String,
          appPath: String,
          allowedExtensions: [String] = [],
-         foldersOnly: Bool = false) {
+         foldersOnly: Bool = false,
+         collapsed: Bool = true) {
         self.id = id
         self.name = name
         self.appPath = appPath
         self.allowedExtensions = allowedExtensions.map { $0.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: ".")) }
         self.foldersOnly = foldersOnly
+        self.collapsed = collapsed
     }
 
-    // 兼容旧配置：缺少 foldersOnly 字段时默认 false。
+    // 兼容旧配置：缺少 foldersOnly/collapsed 字段时使用默认值。
     private enum CodingKeys: String, CodingKey {
-        case id, name, appPath, allowedExtensions, foldersOnly
+        case id, name, appPath, allowedExtensions, foldersOnly, collapsed
     }
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -44,6 +49,7 @@ struct AppEntry: Codable, Identifiable, Equatable, Hashable {
         appPath = try c.decode(String.self, forKey: .appPath)
         allowedExtensions = try c.decodeIfPresent([String].self, forKey: .allowedExtensions) ?? []
         foldersOnly = try c.decodeIfPresent(Bool.self, forKey: .foldersOnly) ?? false
+        collapsed = try c.decodeIfPresent(Bool.self, forKey: .collapsed) ?? true
     }
 
     /// URL 形式
