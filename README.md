@@ -139,3 +139,5 @@ build/path-services-tests
 ### 1.5 更新来源
 
 此 Fork 的版本号为 **1.5**。应用内的自动/手动检查更新、仓库和反馈入口均指向 [Charlizsz/Flicker](https://github.com/Charlizsz/Flicker)，不查询上游仓库。更新检测只提示并打开 Release 下载页，不会自动安装或覆盖应用。没有公开正式 Release 时，手动检查会说明暂无发布版本，自动检查保持静默。后续需要在本仓库发布版本号更高的正式 Release（例如 `v1.6`）才会提示更新；仅推送代码不会触发版本更新。
+
+打包脚本明确构建 `arm64 + x86_64` 通用版本，可在 Intel 或 Apple Silicon Mac 上执行。生成 DMG 前会检查主应用和 Finder 扩展是否同时包含两种架构，缺少任一架构则停止打包。

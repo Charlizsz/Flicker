@@ -125,3 +125,5 @@ See the Chinese README for the standalone Swift regression test command and the 
 ### 1.5 update source
 
 This fork is version **1.5**. Automatic/manual update checks and in-app repository/issue links point to [Charlizsz/Flicker](https://github.com/Charlizsz/Flicker), not upstream. Updates only prompt and open a release page; they do not install or replace the app. When no public stable release is available, manual checks explain this and automatic checks stay quiet. Publish a newer stable release in this repository (for example `v1.6`) to offer an update; pushing code alone does not trigger one.
+
+The packaging script explicitly builds a universal `arm64 + x86_64` Release on either Intel or Apple silicon Macs. It verifies both architectures in the app and Finder extension before creating the DMG, and stops if either slice is missing.
