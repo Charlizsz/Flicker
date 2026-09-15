@@ -61,10 +61,10 @@ struct GeneralSettingsPanel: View {
                     .font(.body)
                     .foregroundStyle(.secondary)
 
-                Link(destination: URL(string: "https://github.com/yananw-pub/Flicker")!) {
+                Link(destination: UpdateChecker.repositoryURL) {
                     Label("GitHub 仓库", systemImage: "link")
                 }
-                Link(destination: URL(string: "https://github.com/yananw-pub/Flicker/issues")!) {
+                Link(destination: UpdateChecker.issuesURL) {
                     Label("反馈问题", systemImage: "exclamationmark.bubble")
                 }
 

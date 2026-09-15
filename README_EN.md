@@ -121,3 +121,7 @@ Open **项目目录** (Project Directories) in the app sidebar to add multiple r
 For example, configuring `/Users/charli/Documents/TCM` yields `outputs/result.txt` without a leading slash. Selecting the root itself yields `.`. Unknown projects fall back to absolute paths. Each selected item is resolved independently. Finder automation permission is no longer needed. Re-add configured roots after moving their folders.
 
 See the Chinese README for the standalone Swift regression test command and the Finder/iCloud manual verification checklist.
+
+### 1.5 update source
+
+This fork is version **1.5**. Automatic/manual update checks and in-app repository/issue links point to [Charlizsz/Flicker](https://github.com/Charlizsz/Flicker), not upstream. Updates only prompt and open a release page; they do not install or replace the app. When no public stable release is available, manual checks explain this and automatic checks stay quiet. Publish a newer stable release in this repository (for example `v1.6`) to offer an update; pushing code alone does not trigger one.

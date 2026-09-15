@@ -65,10 +65,10 @@ struct AboutView: View {
 
     private var linksSection: some View {
         VStack(spacing: 10) {
-            Link(destination: URL(string: "https://github.com/yananw-pub/Flicker")!) {
+            Link(destination: UpdateChecker.repositoryURL) {
                 Label("GitHub 仓库", systemImage: "link")
             }
-            Link(destination: URL(string: "https://github.com/yananw-pub/Flicker/issues")!) {
+            Link(destination: UpdateChecker.issuesURL) {
                 Label("反馈问题", systemImage: "exclamationmark.bubble")
             }
         }

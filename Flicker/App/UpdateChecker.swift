@@ -11,11 +11,15 @@ import AppKit
 struct UpdateChecker {
 
     /// GitHub 仓库（owner/repo），发 Release 时 tag 格式为 v1.2.3。
-    private static let owner = "yananw-pub"
+    private static let owner = "Charlizsz"
     private static let repo  = "Flicker"
+
+    static let repositoryURL = URL(string: "https://github.com/\(owner)/\(repo)")!
+    static let issuesURL = repositoryURL.appendingPathComponent("issues")
 
     /// 检查结果：无更新 / 有更新 / 检查失败。
     enum Result {
+        case noPublishedRelease
         case upToDate
         case updateAvailable(version: String, url: URL)
         case checkFailed(String)
@@ -30,7 +34,7 @@ struct UpdateChecker {
         Task {
             let result = await check()
             switch result {
-            case .upToDate, .checkFailed:
+            case .upToDate, .noPublishedRelease, .checkFailed:
                 break // 静默；失败时无感知，不打扰用户
             case .updateAvailable(let version, let url):
                 await MainActor.run {
@@ -47,6 +51,8 @@ struct UpdateChecker {
             let result = await check()
             await MainActor.run {
                 switch result {
+                case .noPublishedRelease:
+                    showNoPublishedReleaseAlert()
                 case .upToDate:
                     showUpToDateAlert()
                 case .updateAvailable(let version, let url):
@@ -72,6 +78,9 @@ struct UpdateChecker {
 
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
+            if (response as? HTTPURLResponse)?.statusCode == 404 {
+                return .noPublishedRelease
+            }
             guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
                 let code = (response as? HTTPURLResponse)?.statusCode ?? -1
                 return .checkFailed("HTTP \(code)")
@@ -110,10 +119,11 @@ struct UpdateChecker {
 
     // MARK: - UI
 
+    @MainActor
     private static func showAlert(version: String, url: URL) {
         let alert = NSAlert()
         alert.messageText = "发现新版本 v\(version)"
-        alert.informativeText = "Flicker 有新版本可用，是否前往 GitHub 下载？"
+        alert.informativeText = "你的 Flicker 仓库有新版本可用，是否前往 GitHub 下载？"
         alert.alertStyle = .informational
         alert.addButton(withTitle: "前往下载")
         alert.addButton(withTitle: "稍后再说")
@@ -122,6 +132,7 @@ struct UpdateChecker {
         }
     }
 
+    @MainActor
     private static func showUpToDateAlert() {
         let alert = NSAlert()
         alert.messageText = "已是最新版本"
@@ -131,6 +142,17 @@ struct UpdateChecker {
         alert.runModal()
     }
 
+    @MainActor
+    private static func showNoPublishedReleaseAlert() {
+        let alert = NSAlert()
+        alert.messageText = "暂无可用的发布版本"
+        alert.informativeText = "未找到 Charlizsz/Flicker 的公开正式 Release。当前版本 v\(Bundle.main.appVersion ?? "?")；仅检查此仓库的更新。"
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "好的")
+        alert.runModal()
+    }
+
+    @MainActor
     private static func showFailureAlert(message: String) {
         let alert = NSAlert()
         alert.messageText = "检查更新失败"
