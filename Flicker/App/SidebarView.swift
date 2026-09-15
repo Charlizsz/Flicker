@@ -11,12 +11,14 @@ import SwiftUI
 enum NavigationItem: String, CaseIterable, Identifiable {
     case openWith = "打开方式"
     case actionControl = "操作控制"
+    case projects = "项目目录"
     case general = "通用设置"
     
     var icon: String {
         switch self {
         case .openWith: return "app.badge"
         case .actionControl: return "slider.horizontal.3"
+        case .projects: return "folder.badge.gearshape"
         case .general: return "gearshape"
         }
     }

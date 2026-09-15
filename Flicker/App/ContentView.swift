@@ -23,6 +23,8 @@ struct ContentView: View {
                     OpenWithPanel()
                 case .actionControl:
                     ActionControlPanel()
+                case .projects:
+                    ProjectDirectoriesPanel()
                 case .general:
                     GeneralSettingsPanel()
                 }

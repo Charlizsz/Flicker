@@ -17,10 +17,16 @@ struct ActionControlPanel: View {
                     .help("关闭后 Flicker 不再向 Finder 右键菜单添加任何项目；如需系统层面禁用，请在访达扩展设置中关闭 Flicker")
                 Toggle("复制绝对路径", isOn: $settings.showCopyAbsolutePath)
                     .help("在右键菜单中显示「复制绝对路径」")
-                Toggle("复制相对路径", isOn: $settings.showCopyRelativePath)
-                    .help("在右键菜单中显示「复制相对路径」")
+                Toggle("复制项目内路径", isOn: $settings.showCopyRelativePath)
+                    .help("在右键菜单中显示「复制项目内路径」")
                 Toggle("复制文件名", isOn: $settings.showCopyFileName)
                     .help("在右键菜单中显示「复制文件名」")
+            }
+            Section("iCloud 文件与系统服务") {
+                Text("在访达中选中文件或文件夹，右键 → 服务，选择「复制绝对路径 / 复制项目内路径 / 复制文件名」。支持多选。")
+                Text("服务可在系统设置 → 键盘 → 键盘快捷键 → 服务中启用和设置快捷键，不受上方 Finder 菜单开关影响。项目内路径以「项目目录」中配置的文件夹或自动识别的 Git 根目录为基准；找不到项目时复制绝对路径。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
             Section("新建文件") {
                 ForEach(NewFileType.defaults) { fileType in

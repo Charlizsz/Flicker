@@ -27,7 +27,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    private var pathServices: PathServices?
+
     func applicationDidFinishLaunching(_ notification: Notification) {
+        let provider = PathServices()
+        pathServices = provider
+        NSApp.servicesProvider = provider
+        NSUpdateDynamicServices()
         if Self.launchedByURL {
             // 静默运行：隐藏窗口，不应用界面设置，仅同步登录项。
             NSApp.windows.forEach { $0.orderOut(nil) }

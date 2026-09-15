@@ -35,6 +35,11 @@
 		A10105 /* MenuSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20017; };
 		A10016 /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20019; };
 		A10106 /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20019; };
+		A10021 /* PathServices.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20024; };
+		A10022 /* PathFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20025; };
+		A10107 /* PathFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20025; };
+		A10023 /* ProjectPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20026; };
+		A10024 /* ProjectDirectoriesPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20027; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -68,6 +73,10 @@
 		A20102 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A20103 /* FlickerExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FlickerExtension.entitlements; sourceTree = "<group>"; };
 		A20104 /* FlickerExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FlickerExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A20024 /* PathServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathServices.swift; sourceTree = "<group>"; };
+		A20025 /* PathFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathFormatter.swift; sourceTree = "<group>"; };
+		A20026 /* ProjectPaths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectPaths.swift; sourceTree = "<group>"; };
+		A20027 /* ProjectDirectoriesPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectDirectoriesPanel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -118,6 +127,9 @@
 				A20021 /* OpenWithPanel.swift */,
 				A20022 /* ActionControlPanel.swift */,
 				A20023 /* GeneralSettingsPanel.swift */,
+				A20024 /* PathServices.swift */,
+				A20027 /* ProjectDirectoriesPanel.swift */,
+				A20026 /* ProjectPaths.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -129,6 +141,7 @@
 				A20002 /* SharedStore.swift */,
 				A20017 /* MenuSettings.swift */,
 				A20019 /* Logger.swift */,
+				A20025 /* PathFormatter.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -245,6 +258,10 @@
 				A10018 /* OpenWithPanel.swift in Sources */,
 				A10019 /* ActionControlPanel.swift in Sources */,
 				A10020 /* GeneralSettingsPanel.swift in Sources */,
+				A10022 /* PathFormatter.swift in Sources */,
+				A10021 /* PathServices.swift in Sources */,
+				A10024 /* ProjectDirectoriesPanel.swift in Sources */,
+				A10023 /* ProjectPaths.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -257,6 +274,7 @@
 				A10105 /* MenuSettings.swift in Sources */,
 				A10103 /* FinderSync.swift in Sources */,
 				A10106 /* Logger.swift in Sources */,
+				A10107 /* PathFormatter.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

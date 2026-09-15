@@ -16,7 +16,7 @@ final class FinderSync: FIFinderSync {
 
     override init() {
         super.init()
-        // 监视根目录，使右键菜单可出现在任意位置。
+        // 监视根目录；iCloud 等受限位置使用容器 App 提供的系统服务。
         FIFinderSyncController.default().directoryURLs = [URL(fileURLWithPath: "/")]
     }
 
@@ -70,7 +70,7 @@ final class FinderSync: FIFinderSync {
             menu.addItem(withTitle: "复制绝对路径", action: #selector(copyAbsolutePath(_:)), keyEquivalent: "")
         }
         if menuSettings.showCopyRelativePath {
-            menu.addItem(withTitle: "复制相对路径", action: #selector(copyRelativePath(_:)), keyEquivalent: "")
+            menu.addItem(withTitle: "复制项目内路径", action: #selector(copyRelativePath(_:)), keyEquivalent: "")
         }
         if menuSettings.showCopyFileName {
             menu.addItem(withTitle: "复制文件名", action: #selector(copyFileName(_:)), keyEquivalent: "")
@@ -172,11 +172,11 @@ final class FinderSync: FIFinderSync {
 
     @objc private func copyRelativePath(_ sender: NSMenuItem) {
         guard let urls = FIFinderSyncController.default().selectedItemURLs(), !urls.isEmpty else { return }
-        let base = FIFinderSyncController.default().targetedURL()
-        let paths = urls.map { url -> String in
-            if let base { return relativePath(of: url, to: base) } else { return url.path }
-        }.joined(separator: "\n")
-        copyToPasteboard(paths)
+        // Resolve roots in the container app, outside the extension sandbox.
+        guard var components = URLComponents(string: "flicker://copy-project-path") else { return }
+        components.queryItems = urls.map { URLQueryItem(name: "target", value: $0.path) }
+        guard let request = components.url else { return }
+        openContainerApp(with: request)
     }
 
     @objc private func copyFileName(_ sender: NSMenuItem) {
@@ -255,24 +255,6 @@ final class FinderSync: FIFinderSync {
     }
 
     // MARK: - Helpers
-
-    /// 计算 target 相对于 base 的路径（如 "sub/file.txt"、"../sibling/file.txt"）。
-    /// base 不在 target 的祖先链上时回退为 target 的绝对路径。
-    private func relativePath(of target: URL, to base: URL) -> String {
-        let baseComps = base.standardizedFileURL.pathComponents
-        let targetComps = target.standardizedFileURL.pathComponents
-        // 找公共前缀
-        var i = 0
-        while i < baseComps.count - 1, i < targetComps.count - 1, baseComps[i] == targetComps[i] {
-            i += 1
-        }
-        // base 剩余的每一级都对应一次 ".."
-        let ups = max(0, baseComps.count - 1 - i)
-        let downs = Array(targetComps.dropFirst(i))
-        var parts: [String] = Array(repeating: "..", count: ups)
-        parts.append(contentsOf: downs)
-        return parts.isEmpty ? "." : parts.joined(separator: "/")
-    }
 
     private func copyToPasteboard(_ string: String) {
         let pb = NSPasteboard.general

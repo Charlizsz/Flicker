@@ -47,6 +47,39 @@
 			</array>
 		</dict>
 	</array>
+	<key>NSServices</key>
+	<array>
+		<dict>
+			<key>NSMenuItem</key>
+			<dict><key>default</key><string>复制绝对路径</string></dict>
+			<key>NSMessage</key><string>copyPath</string>
+			<key>NSUserData</key><string>absolute</string>
+			<key>NSPortName</key><string>Flicker</string>
+			<key>NSSendFileTypes</key><array><string>public.item</string></array>
+			<key>NSRequiredContext</key>
+			<dict><key>NSApplicationIdentifier</key><string>com.apple.finder</string></dict>
+		</dict>
+		<dict>
+			<key>NSMenuItem</key>
+			<dict><key>default</key><string>复制项目内路径</string></dict>
+			<key>NSMessage</key><string>copyPath</string>
+			<key>NSUserData</key><string>relative</string>
+			<key>NSPortName</key><string>Flicker</string>
+			<key>NSSendFileTypes</key><array><string>public.item</string></array>
+			<key>NSRequiredContext</key>
+			<dict><key>NSApplicationIdentifier</key><string>com.apple.finder</string></dict>
+		</dict>
+		<dict>
+			<key>NSMenuItem</key>
+			<dict><key>default</key><string>复制文件名</string></dict>
+			<key>NSMessage</key><string>copyPath</string>
+			<key>NSUserData</key><string>name</string>
+			<key>NSPortName</key><string>Flicker</string>
+			<key>NSSendFileTypes</key><array><string>public.item</string></array>
+			<key>NSRequiredContext</key>
+			<dict><key>NSApplicationIdentifier</key><string>com.apple.finder</string></dict>
+		</dict>
+	</array>
 	<key>NSSupportsAutomaticGraphicsSwitching</key>
 	<true/>
 </dict>

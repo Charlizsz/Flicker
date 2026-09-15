@@ -19,7 +19,7 @@ struct SettingsView: View {
                 .font(.title2)
                 .fontWeight(.medium)
 
-            Text("请在主窗口左侧导航栏中选择「通用设置」或「操作控制」进行配置。")
+            Text("请在主窗口左侧导航栏中选择「项目目录」、「通用设置」或「操作控制」进行配置。")
                 .font(.body)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

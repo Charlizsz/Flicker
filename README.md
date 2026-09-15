@@ -32,7 +32,7 @@
 
 - 对文件/文件夹右键，可选择用预配置的应用程序打开
 - 打开方式支持折叠到「打开方式」子菜单，或直接显示在 Finder 右键一级菜单中
-- 复制选中项的绝对路径、相对路径或文件名到剪贴板
+- 复制选中项的绝对路径、项目内路径或文件名到剪贴板
 - 支持在 Finder 右键菜单中新建常用文件类型，并可设置创建后自动打开
 - 容器 App 内配置可用应用程序列表（含每个应用适用的文件扩展名）
 - 支持「仅文件夹」模式，灵活控制菜单项显示范围
@@ -93,7 +93,7 @@ xcodebuild -project Flicker.xcodeproj -scheme Flicker -configuration Debug build
 
 ## 技术说明
 
-- 相对路径基准为当前 Finder 窗口文件夹（`targetedURL`），无法获取时回退为绝对路径
+- 项目内路径优先匹配手动配置的项目根目录，其次自动识别最近的 Git 根目录；找不到时回退为绝对路径。两个菜单入口使用同一套规则。
 - 配置通过用户 Application Support 目录中的 JSON 文件在 App 与扩展间共享
 - Finder Sync 扩展由 macOS 托管，退出 Flicker 主 App 不等于卸载扩展；如需临时关闭 Flicker 菜单，可在「操作控制」中关闭「启用 Finder 右键菜单」
 - 最低系统版本 macOS 14.0（Sonoma）
@@ -109,3 +109,29 @@ xcodebuild -project Flicker.xcodeproj -scheme Flicker -configuration Debug build
 ## 许可证
 
 本项目基于 [MIT License](LICENSE) 开源。
+
+### iCloud Drive：通过「服务」复制路径
+
+对于 Finder Sync 菜单无法出现的 iCloud Drive（包括同步的 Documents / Desktop），可使用主 App 提供的系统服务：
+
+1. 构建新版 Flicker，将 `Flicker.app` 放入「应用程序」并运行一次。
+2. 在访达选中文件或文件夹，右键 → **服务**，选择 **复制绝对路径 / 复制项目内路径 / 复制文件名**。多选结果以换行分隔。
+3. 若没有显示，在系统设置 → 键盘 → 键盘快捷键 → 服务中启用对应项目，也可设置快捷键。必要时注销并重新登录。
+
+服务独立于「操作控制」中的 Finder 菜单开关，由系统服务设置管理。绝对路径和文件名只处理系统传入的文件 URL，代码不会读取文件内容或主动下载 iCloud 文件。路径是这台 Mac 的文件系统路径，不是 iCloud 分享链接。
+
+在主窗口左侧打开 **项目目录**，点击「添加项目文件夹…」，可一次选择多个项目根文件夹。支持搜索、移除和重启后保留设置，无需修改代码。Git 项目无需手动添加：会自动识别最近的 `.git` 文件夹或 worktree 的 `.git` 文件。手动配置优先，嵌套配置选择匹配最深的根目录；普通前缀相似的文件夹不会误匹配。
+
+例如添加 `/Users/charli/Documents/TCM` 后，复制其下 `outputs/result.txt` 得到 `outputs/result.txt`，不带开头的 `/`。选中项目根目录本身得到 `.`。找不到项目根目录时保留绝对路径，不猜测 Documents 下哪一层是项目。多选时每个文件分别匹配所属项目。
+
+此功能不再读取访达窗口或要求自动化权限。Finder 扩展将选中文件的路径交给主 App 统一处理，服务入口直接由主 App 执行。手动目录移动后需在列表中重新添加。
+
+开发验证（需要匹配的 macOS SDK 与 Swift 6 工具链）：
+
+```sh
+mkdir -p build
+swiftc -swift-version 6 Flicker/Shared/PathFormatter.swift Flicker/Shared/SharedStore.swift Flicker/Shared/AppEntry.swift Flicker/Shared/MenuSettings.swift Flicker/App/ProjectPaths.swift Flicker/App/PathServices.swift tests/PathServicesTests.swift -o build/path-services-tests
+build/path-services-tests
+```
+
+发布前请在 Finder 中验证：本地和 iCloud 文件/文件夹、未下载的 iCloud 文件、中文及空格文件名、多选、项目配置保存与移除、嵌套目录、Git 自动识别、App 未运行时调用服务，以及原 Finder 右键菜单。测试程序使用独立剪贴板，不改写用户的通用剪贴板。

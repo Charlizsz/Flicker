@@ -32,6 +32,14 @@ enum URLOpener {
         switch comps.host?.lowercased() {
         case "open":
             handleOpen(comps)
+        case "copy-project-path":
+            // URLComponents already decodes query values; do not decode them twice.
+            let paths = comps.queryItems?.filter { $0.name == "target" }.compactMap(\.value) ?? []
+            guard !paths.isEmpty, paths.allSatisfy({ $0.hasPrefix("/") }) else { return }
+            let urls = paths.map { URL(fileURLWithPath: $0) }
+            Task { @MainActor in
+                PathServices().copyProjectURLs(urls)
+            }
         case "newfile":
             handleNewFile(comps)
         default:

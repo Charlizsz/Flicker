@@ -32,7 +32,7 @@ A minimalist macOS Finder right-click menu extension — open files and folders 
 
 - Right-click files/folders to open with pre-configured applications
 - Place configured apps either inside the Open With submenu or directly in the Finder context menu
-- Copy absolute paths, relative paths, or file names to clipboard
+- Copy absolute paths, project-relative paths, or file names to clipboard
 - Create common file types from the Finder context menu, with optional auto-open after creation
 - Configure app list with per-app file extension filters inside the container app
 - "Folders only" mode for fine-grained menu visibility control
@@ -93,7 +93,7 @@ If you fork this project and plan to build your own copy, update these values to
 
 ## Technical Notes
 
-- Relative paths are based on the current Finder window folder (`targetedURL`); falls back to absolute path when unavailable
+- Project-relative paths use the deepest matching configured root, then the nearest Git root, falling back to absolute paths when neither is available.
 - Configuration is shared between the app and extension via JSON files in the user's Application Support directory
 - Finder Sync extensions are hosted by macOS; quitting Flicker does not unload the extension. To temporarily hide Flicker's menu output, disable **Enable Finder Context Menu** in Action Control
 - Minimum deployment target: macOS 14.0 (Sonoma)
@@ -109,3 +109,15 @@ Issues and Pull Requests are welcome!
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
+
+### iCloud Drive path services
+
+When Finder Sync menus are unavailable in iCloud Drive (including synced Documents/Desktop), install the rebuilt app in Applications and launch it once. Select files or folders in Finder and choose **Services → 复制绝对路径 / 复制项目内路径 / 复制文件名** (copy absolute path / project-relative path / filename). Enable the entries or assign shortcuts in System Settings → Keyboard → Keyboard Shortcuts → Services if needed; logging out and back in may be necessary.
+
+Services are managed independently of Flicker's Finder menu toggles. Multiple selections produce newline-separated text. The implementation only formats supplied file URLs; it does not read or explicitly download file contents. These are local filesystem paths, not iCloud sharing links.
+
+Open **项目目录** (Project Directories) in the app sidebar to add multiple root folders, search, or remove entries. Settings persist without code edits. Manually configured roots take priority (deepest match wins); otherwise the nearest `.git` directory or worktree `.git` file is detected automatically. Both Finder and Services use the same resolver in the container app.
+
+For example, configuring `/Users/charli/Documents/TCM` yields `outputs/result.txt` without a leading slash. Selecting the root itself yields `.`. Unknown projects fall back to absolute paths. Each selected item is resolved independently. Finder automation permission is no longer needed. Re-add configured roots after moving their folders.
+
+See the Chinese README for the standalone Swift regression test command and the Finder/iCloud manual verification checklist.
