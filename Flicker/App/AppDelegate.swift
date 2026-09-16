@@ -9,32 +9,32 @@
 import AppKit
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
-    /// 是否因处理自定义 URL 而被拉起（扩展触发"打开方式"）。
+    /// 是否由 URL 或系统服务拉起；主动打开界面时清除。
     /// 仅在主线程读写。
-    nonisolated(unsafe) static var launchedByURL = false
+    nonisolated(unsafe) static var launchedInBackground = false
 
     func applicationWillFinishLaunching(_ notification: Notification) {
-        // 通过 URL 启动时，系统会带上 kAEGetURL Apple Event，direct object 即 URL 字符串。
-        let event = NSAppleEventManager.shared().currentAppleEvent
-        if let event,
-           let url = event.paramDescriptor(forKeyword: keyDirectObject)?.stringValue,
-           url.lowercased().hasPrefix("\(URLOpener.scheme)://") {
-            Self.launchedByURL = true
-        }
-        if Self.launchedByURL {
-            // 扩展拉起时保持静默：不抢焦点、不显窗口。
-            NSApp.setActivationPolicy(.accessory)
-        }
+        Self.launchedInBackground = Self.isBackgroundEvent(NSAppleEventManager.shared().currentAppleEvent)
+        // Info.plist starts as an agent, so Launch Services never inserts a
+        // temporary Dock icon before we know why the app was launched.
+    }
+
+    static func isBackgroundEvent(_ event: NSAppleEventDescriptor?) -> Bool {
+        guard let event else { return false }
+        if let url = event.paramDescriptor(forKeyword: keyDirectObject)?.stringValue,
+           url.lowercased().hasPrefix("\(URLOpener.scheme)://") { return true }
+        // Launch flags may be sent directly or inside the launch properties record.
+        return event.paramDescriptor(forKeyword: keyAELaunchedAsServiceItem) != nil
+            || event.paramDescriptor(forKeyword: keyAEPropData)?
+                .forKeyword(keyAELaunchedAsServiceItem) != nil
     }
 
     private var pathServices: PathServices?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        let provider = PathServices()
-        pathServices = provider
-        NSApp.servicesProvider = provider
-        NSUpdateDynamicServices()
-        if Self.launchedByURL {
+        Self.launchedInBackground = Self.launchedInBackground
+            || Self.isBackgroundEvent(NSAppleEventManager.shared().currentAppleEvent)
+        if Self.launchedInBackground {
             // 静默运行：隐藏窗口，不应用界面设置，仅同步登录项。
             NSApp.windows.forEach { $0.orderOut(nil) }
             AppSettings.shared.applyLoginItem()
@@ -46,25 +46,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 UpdateChecker.checkAndNotify()
             }
         }
+        // Register after launch policy is set: a service can arrive immediately.
+        let provider = PathServices()
+        pathServices = provider
+        NSApp.servicesProvider = provider
+        NSUpdateDynamicServices()
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         // 用户再次打开已运行的应用（如从 Dock / Finder 点击）：显示主窗口并应用界面设置。
         showMainWindow()
-        AppSettings.shared.applyAll()
         return true
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
-        // 有菜单栏图标时保留进程（可随时重新打开窗口）；否则关闭即退出。
-        return !AppSettings.shared.showMenuBarIcon
+        // 后台复制时保持服务进程存活；普通界面沿用原有退出偏好。
+        return !Self.launchedInBackground && !AppSettings.shared.showMenuBarIcon
     }
 
     @MainActor @objc func showMainWindow() {
+        Self.prepareForUserInterface()
         AppActions.shared.openMainWindow?()
         NSApp.activate(ignoringOtherApps: true)
     }
     
+    @MainActor static func prepareForUserInterface() {
+        launchedInBackground = false
+        AppSettings.shared.applyAll()
+    }
+
     // MARK: - URL Handling
     
     func application(_ application: NSApplication, open urls: [URL]) {

@@ -49,6 +49,7 @@ private struct WindowManagementConfigurator: NSViewRepresentable {
         DispatchQueue.main.async {
             if let window = view.window {
                 AppSettings.shared.configureWindowManagementVisibility(window)
+                if AppDelegate.launchedInBackground { window.orderOut(nil) }
             }
         }
         return view
@@ -58,6 +59,7 @@ private struct WindowManagementConfigurator: NSViewRepresentable {
         DispatchQueue.main.async {
             if let window = nsView.window {
                 AppSettings.shared.configureWindowManagementVisibility(window)
+                if AppDelegate.launchedInBackground { window.orderOut(nil) }
             }
         }
     }

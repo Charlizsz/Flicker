@@ -153,7 +153,7 @@ enum URLOpener {
     
     /// 隐藏应用，避免主窗口抢占焦点。
     private static func hideApp() {
-        if AppDelegate.launchedByURL {
+        if AppDelegate.launchedInBackground {
             // 冷启动场景：保持 accessory 策略，隐藏残留窗口。
             NSApp.windows.forEach { $0.orderOut(nil) }
         } else {
