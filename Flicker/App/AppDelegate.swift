@@ -14,44 +14,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     nonisolated(unsafe) static var launchedInBackground = false
 
     func applicationWillFinishLaunching(_ notification: Notification) {
-        Self.launchedInBackground = Self.isBackgroundEvent(NSAppleEventManager.shared().currentAppleEvent)
-        // Info.plist starts as an agent, so Launch Services never inserts a
-        // temporary Dock icon before we know why the app was launched.
-    }
-
-    static func isBackgroundEvent(_ event: NSAppleEventDescriptor?) -> Bool {
-        guard let event else { return false }
-        if let url = event.paramDescriptor(forKeyword: keyDirectObject)?.stringValue,
-           url.lowercased().hasPrefix("\(URLOpener.scheme)://") { return true }
-        // Launch flags may be sent directly or inside the launch properties record.
-        return event.paramDescriptor(forKeyword: keyAELaunchedAsServiceItem) != nil
-            || event.paramDescriptor(forKeyword: keyAEPropData)?
-                .forKeyword(keyAELaunchedAsServiceItem) != nil
+        Self.launchedInBackground = true
     }
 
     private var pathServices: PathServices?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        Self.launchedInBackground = Self.launchedInBackground
-            || Self.isBackgroundEvent(NSAppleEventManager.shared().currentAppleEvent)
-        if Self.launchedInBackground {
-            // 静默运行：隐藏窗口，不应用界面设置，仅同步登录项。
-            NSApp.windows.forEach { $0.orderOut(nil) }
-            AppSettings.shared.applyLoginItem()
-        } else {
-            AppSettings.shared.applyAll()
-            // 延迟 3 秒后静默检查更新，不阻塞启动。
-            Task {
-                try? await Task.sleep(for: .seconds(3))
-                UpdateChecker.checkAndNotify()
-            }
-        }
+        // Startup is intentionally windowless, including login, Services and
+        // URLs. Dock policy is applied only when the user requests the UI.
+        Self.launchedInBackground = true
+        NSApp.setActivationPolicy(.accessory)
+        AppSettings.shared.applyMenuBar()
         // Register after launch policy is set: a service can arrive immediately.
         let provider = PathServices()
         pathServices = provider
         NSApp.servicesProvider = provider
         NSUpdateDynamicServices()
     }
+
+    func applicationShouldOpenUntitledFile(_ sender: NSApplication) -> Bool { false }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         // 用户再次打开已运行的应用（如从 Dock / Finder 点击）：显示主窗口并应用界面设置。
@@ -65,9 +46,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @MainActor @objc func showMainWindow() {
-        Self.prepareForUserInterface()
         AppActions.shared.openMainWindow?()
-        NSApp.activate(ignoringOtherApps: true)
     }
     
     @MainActor static func prepareForUserInterface() {

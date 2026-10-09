@@ -127,3 +127,11 @@ See the Chinese README for the standalone Swift regression test command and the 
 This fork is version **1.5**. Automatic/manual update checks and in-app repository/issue links point to [Charlizsz/Flicker](https://github.com/Charlizsz/Flicker), not upstream. Updates only prompt and open a release page; they do not install or replace the app. When no public stable release is available, manual checks explain this and automatic checks stay quiet. Publish a newer stable release in this repository (for example `v1.6`) to offer an update; pushing code alone does not trigger one.
 
 The packaging script explicitly builds a universal `arm64 + x86_64` Release on either Intel or Apple silicon Macs. It verifies both architectures in the app and Finder extension before creating the DMG, and stops if either slice is missing.
+
+### Local build with Command Line Tools only
+
+Run `python3 scripts/build_clt.py` without full Xcode. It reads the project's versions and source membership, builds universal ARM/Intel app and Finder extension binaries, signs them ad hoc, verifies signatures and writes the app and ZIP to `dist/Flicker-<version>-CLT/`. It does not install or replace an existing app. For iCloud workspaces, extract the ZIP in a local Downloads folder before installing. The ZIP is created from the temporary bundle before iCloud can attach Finder metadata, and its extracted signature is verified.
+
+Xcode-only previews are disabled in temporary source copies; existing ICNS and menu-bar PNG resources replace asset compilation. A compiler-local VFS overlay handles duplicate SwiftBridging declarations where needed without modifying the installed toolchain. The extension's configuration-read exception uses the build user's home directory, for local use. These builds are not Developer ID signed or notarized.
+
+Version 1.5 (build 2) creates the configuration window only on explicit request. Startup and copy services stay windowless. Use the menu-bar action or reopen Flicker to show the UI. Automatic update checks run on the first explicit UI opening so copy operations do not display update dialogs.

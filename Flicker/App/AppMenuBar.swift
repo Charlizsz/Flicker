@@ -64,13 +64,11 @@ final class AppMenuBar {
     }
 
     @objc private func showMainWindow() {
-        AppDelegate.prepareForUserInterface()
         AppActions.shared.openMainWindow?()
         NSApp.activate(ignoringOtherApps: true)
     }
 
     @objc private func openSettings() {
-        AppDelegate.prepareForUserInterface()
         AppActions.shared.openSettings?()
     }
 

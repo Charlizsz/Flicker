@@ -1,20 +1,41 @@
-//
-//  AppActions.swift
-//  Flicker
-//
-//  桥接 SwiftUI 场景动作与 AppKit（托盘菜单 / AppDelegate）。
-//  在 SwiftUI 场景根捕获 openWindow / openSettings 闭包，
-//  使得窗口关闭后 AppKit 侧仍可通过 AppActions 重新打开窗口。
-//
-
+import AppKit
 import SwiftUI
 
 @MainActor
 final class AppActions {
     static let shared = AppActions()
-
-    var openMainWindow: (() -> Void)?
-    var openSettings: (() -> Void)?
-
+    private var mainWindow: NSWindow?
+    private var checkedForUpdates = false
     private init() {}
+
+    // Preserve the call sites used by the menu bar and settings panel. These
+    // actions are available even before any view has appeared.
+    var openMainWindow: (() -> Void)? { { self.showMainWindow() } }
+    var openSettings: (() -> Void)? { { self.showMainWindow() } }
+
+    private func showMainWindow() {
+        AppDelegate.prepareForUserInterface()
+        if mainWindow == nil {
+            let content = ContentView()
+                .environmentObject(AppEntryStore())
+                .frame(minWidth: 560, minHeight: 420)
+            let window = NSWindow(contentViewController: NSHostingController(rootView: content))
+            window.title = "Flicker"
+            window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
+            window.setContentSize(NSSize(width: 720, height: 520))
+            window.minSize = NSSize(width: 560, height: 420)
+            window.isReleasedWhenClosed = false
+            window.isRestorable = false
+            window.center()
+            mainWindow = window
+        }
+        guard let window = mainWindow else { return }
+        AppSettings.shared.configureWindowManagementVisibility(window)
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+        if !checkedForUpdates {
+            checkedForUpdates = true
+            UpdateChecker.checkAndNotify()
+        }
+    }
 }

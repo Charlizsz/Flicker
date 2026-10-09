@@ -141,3 +141,17 @@ build/path-services-tests
 此 Fork 的版本号为 **1.5**。应用内的自动/手动检查更新、仓库和反馈入口均指向 [Charlizsz/Flicker](https://github.com/Charlizsz/Flicker)，不查询上游仓库。更新检测只提示并打开 Release 下载页，不会自动安装或覆盖应用。没有公开正式 Release 时，手动检查会说明暂无发布版本，自动检查保持静默。后续需要在本仓库发布版本号更高的正式 Release（例如 `v1.6`）才会提示更新；仅推送代码不会触发版本更新。
 
 打包脚本明确构建 `arm64 + x86_64` 通用版本，可在 Intel 或 Apple Silicon Mac 上执行。生成 DMG 前会检查主应用和 Finder 扩展是否同时包含两种架构，缺少任一架构则停止打包。
+
+### 仅使用 Command Line Tools 本地构建
+
+没有完整 Xcode 时，可运行：
+
+```sh
+python3 scripts/build_clt.py
+```
+
+脚本读取 Xcode 项目的版本和源文件列表，构建 ARM/Intel 双架构的主应用与 Finder 扩展，完成本地临时签名和签名校验，输出 `dist/Flicker-<版本>-CLT/Flicker.app` 与 ZIP。不会安装或覆盖现有应用。项目放在 iCloud 时，优先将 ZIP 移到本地「下载」文件夹解压后安装；脚本会从未受 iCloud 元数据影响的临时包生成 ZIP，并验证重新解压后的签名。
+
+此流程在临时副本中禁用 Xcode 专用 `#Preview`，直接打包现有 ICNS/菜单栏 PNG，因此不需要 `actool`。若 Command Line Tools 存在重复的 SwiftBridging 模块声明，仅通过编译器虚拟文件映射绕过，不改动系统文件。Finder 扩展的共享配置读取例外按构建机器的用户主目录生成，适合本机自用。产物没有 Developer ID 签名或苹果公证。
+
+1.5（构建 2）采用按需创建的配置窗口：启动驻留和复制服务不创建主窗口。需要配置时，通过菜单栏「打开主窗口」或再次打开 Flicker 显示界面。自动更新检查在首次主动打开界面时执行，避免复制操作弹出更新对话框。
